@@ -1,161 +1,302 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
-from flask_restful import Api, Resource
-from datetime import datetime
-import json
 import os
+import sys
+import logging
+import datetime
+import flask
+import flask_login
+import flask_restful
+import flask_sqlalchemy
+import response
+import parser
 
-from urllib3 import response
+# logger settings
+file_name = "fighter-judge"
+log_name = "fighter-judge"
+log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-from config import *
-from utils.parser import *
-from utils.data import *
-from utils.logger import *
+# create log file path
+full_path = file_name + ".log"
 
-app = Flask(__name__)
-app.config.from_pyfile('config.py')
+# basic configs for logger
+logging.basicConfig(level=logging.DEBUG, stream=sys.stdout, format=log_format)
 
-api = Api(app)
-db = SQLAlchemy(app)
-login_manager = LoginManager()
+# create logger and set level
+logger = logging.getLogger(log_name)
+logger.setLevel(logging.DEBUG)
+
+# try to remove the previous manager command log if exist
+try:
+    os.remove(full_path)
+except Exception as e:
+    pass
+
+# create a file handler
+handler = logging.FileHandler(full_path)
+handler.setLevel(logging.DEBUG)
+
+# create a logging format
+formatter = logging.Formatter(log_format)
+handler.setFormatter(formatter)
+
+# add the file handler to the logger
+logger.addHandler(handler)
+
+# configure server
+app = flask.Flask(__name__)
+app.secret_key = "super secret key"
+api = flask_restful.Api(app)
+db = flask_sqlalchemy.SQLAlchemy(app)
+login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
-response = Response()
-logger = Logger()
-
-"""
-    * Database user model
-    * Schema (id, username, password)
-"""
+# get response object
+response = response.Response()
 
 
-class User(UserMixin, db.Model):
+class User(flask_login.UserMixin, db.Model):
+    """
+        Database user model
+    """
+
+    # generate database user model
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(20), nullable=False)
-
-
-"""
-    * Necessary function to keep track user session.
-"""
+    password = db.Column(db.String(50), nullable=False)
 
 
 @login_manager.user_loader
 def load_user(user_id):
-    id_pk = int(user_id)
-    return User.query.get(id_pk)
+    """
+        Keep track user session
+    """
+
+    # get user id
+    user_id = int(user_id)
+
+    # get user
+    return User.query.get(user_id)
 
 
-"""
-    * Content-type : application/json
-    * kadi and sifre required fields
-    * Only support POST requests.
-    * To log in user should be registered to login.db
-"""
+class Login(flask_restful.Resource):
+    """
+        Login endpoint
+        Allowed request types: POST
+        Login required: false
+        Description: Login to server, for permission to logging in, user should be registered in database
+    """
 
-
-class Login(Resource):
     def post(self):
-        args = login_parser.parse_args()
-        user = User.query.filter_by(username=args['kadi'], password=args['sifre']).first()
+        """
+        Content-type : application/json
+        Required fields: kadi (str), sifre (str)
+        """
 
-        if current_user.is_anonymous:
+        # get arguments
+        args = parser.login_parser.parse_args()
+
+        # get user
+        user = User.query.filter_by(username=args["kadi"], password=args["sifre"]).first()
+
+        # requested individual must be anonymous to be logged in
+        if flask_login.current_user.is_anonymous:
+
+            # check if user is valid
             if user is not None:
-                login_user(user)
-                logger.write(user.username.upper() + " logged in", type="POST", link="api/giris", status=200)
-                return {"messsage": f"{args['kadi']} logged in !"}, 200
 
+                # give permissions to user to be logged in
+                flask_login.login_user(user)
+
+                # write logs that user has logged in
+                logger.debug(user.username + " successfully logged in")
+
+                # generate response
+                login_post_response_content = {"result": "success"}
+                login_post_response_code = 200
+
+            # user is not valid
             else:
-                logger.write("Username or password incorrect !", type="POST", link="api/giris", status=400)
-                return {"messsage": "Username or password incorrect !"}, 400
 
+                # write logs that user failed to log in
+                logger.debug(args["kadi"] + " failed to log in")
 
-"""
-    * Get server hour,minute,second,milis
-    * Login required
-    * Only support GET requests
-"""
+                # generate response
+                login_post_response_content = {"result": "failure"}
+                login_post_response_code = 400
 
-
-class GetServerTime(Resource):
-    @login_required
-    def get(self):
-        current = datetime.now()
-        response = {"saat": current.hour,
-                    "dakika": current.minute,
-                    "saniye": current.second,
-                    "milisaniye": round(current.microsecond / 1000)}
-        logger.write("\n" + json.dumps(response, indent=4),
-                     type="GET",
-                     link="api/sunucusaati",
-                     status=200)
-        return response, 200
-
-
-"""
-    * Login required
-    * Only support POST requests
-    * It returns other teams locations info
-"""
-
-
-class PostTelemetry(Resource):
-    @login_required
-    def post(self):
-        args = telemetry_parser.parse_args()
-        response.setArgs(args)
-        if args is not None:
-            logger.write("\n" + f" * Delay: {response.get_delay()}ms\n" + json.dumps(args, indent=4),
-                         type="POST",
-                         link="api/telemetri_gonder",
-                         status=200)
-            return response.getData(), 200
+        # user already logged in
         else:
-            logger.write("Data is incomplete",
-                         type="POST",
-                         link="api/telemetri_gonder",
-                         status=400)
-            return {"message": "Data is incomplete"}, 400
+
+            # write logs that user has logged in before
+            logger.debug(user.username + " logged in before")
+
+            # generate response
+            login_post_response_content = {"result": "unnecessary"}
+            login_post_response_code = 400
+
+        # return to response
+        return login_post_response_content, login_post_response_code
 
 
-"""
-    * Login required
-    * Only support POST requests
-"""
+class GetServerTime(flask_restful.Resource):
+    """
+        Server time endpoint
+        Allowed request types: GET
+        Login required: true
+        Description: Get server time in hour, minute, second, milliseconds
+    """
 
-
-class PostLockOn(Resource):
-    @login_required
-    def post(self):
-        args = lock_on_parser.parse_args()
-
-        if args is not None:
-            logger.write("\n" + json.dumps(args, indent=4), type="POST", link="api/kilitlenme_bilgisi", status=200)
-            return {"message": "Data is received"}, 200
-        else:
-            logger.write("Data is incomplete", type="POST", link="api/kilitlenme_bilgisi", status=400)
-            return {"message": "Data is incomplete"}, 400
-
-
-"""
-    * Only support GET requests.
-    * To log out send GET request once
-"""
-
-
-class Logout(Resource):
-    @login_required
+    @flask_login.login_required
     def get(self):
-        username = current_user.username
-        logout_user()
-        logger.write(f"{username} logged out!", type="GET", link="api/cikis", status=200)
-        return {"messsage": f"{username} logged out!"}, 200
+        """
+            Content-type : application/json
+            Required fields: none
+        """
+
+        # get server time
+        server_time = datetime.datetime.now()
+
+        # generate response
+        time_get_response_content = {"saat": server_time.hour,
+                                     "dakika": server_time.minute,
+                                     "saniye": server_time.second,
+                                     "milisaniye": round(server_time.microsecond / 1000)}
+        time_get_response_code = 200
+
+        # log the request
+        logger.debug(str(time_get_response_content))
+
+        # return to response
+        return time_get_response_content, time_get_response_code
 
 
-"""
-    * Endpoints field
-"""
+class PostTelemetry(flask_restful.Resource):
+    """
+        Telemetry data endpoint
+        Allowed request types: POST
+        Login required: true
+        Description: Get foe and send team telemetry data
+    """
+
+    @flask_login.login_required
+    def post(self):
+        """
+            Content-type : application/json
+            Required fields: dict
+        """
+
+        # get arguments from team
+        args = parser.telemetry_parser.parse_args()
+
+        # save telemetry data of the team
+        response.set_args(args)
+
+        # telemetry data is not empty
+        if args is not None:
+
+            # log the telemetry data
+            logger.debug(str(args))
+
+            # generate response
+            telemetry_post_response_content = response.get_data()
+            telemetry_post_response_code = 200
+
+        # telemetry data is empty
+        else:
+
+            # log the error
+            logger.debug("incomplete telemetry data")
+
+            # generate response
+            telemetry_post_response_content = {"result": "failure"}
+            telemetry_post_response_code = 400
+
+        # return to response content and code
+        return telemetry_post_response_content, telemetry_post_response_code
+
+
+class PostLockOn(flask_restful.Resource):
+    """
+        Target lock data endpoint
+        Allowed request types: POST
+        Login required: true
+        Description: Send target lock data to judge
+    """
+
+    @flask_login.login_required
+    def post(self):
+        """
+            Content-type : application/json
+            Required fields: dict
+        """
+
+        # get target lock data from team
+        args = parser.lock_on_parser.parse_args()
+
+        # target lock data is not empty
+        if args is not None:
+
+            # log the target lock data
+            logger.debug(str(args))
+
+            # generate response
+            target_post_response_content = {"result": "success"}
+            target_post_response_code = 200
+
+        # target lock data is empty
+        else:
+
+            # log the error
+            logger.debug("incomplete target lock data")
+
+            # generate response
+            target_post_response_content = {"result": "failure"}
+            target_post_response_code = 400
+
+        # return to response content and code
+        return target_post_response_content, target_post_response_code
+
+
+class Logout(flask_restful.Resource):
+    """
+        Logout endpoint
+        Allowed request types: GET
+        Login required: true
+        Description: Logout from server, user must be logged in
+    """
+
+    @flask_login.login_required
+    def get(self):
+        """
+            Content-type : application/json
+            Required fields: none
+        """
+
+        # get usr name
+        user_name = flask_login.current_user.username
+
+        # kick user from the server
+        flask_login.logout_user()
+
+        # log the action
+        logger.debug(user_name + " successfully logged out")
+
+        # generate response
+        logout_get_response_content = {"result": "success"}
+        logout_get_response_code = 200
+
+        # return to response
+        return logout_get_response_content, logout_get_response_code
+
+
+@app.before_first_request
+def create_tables():
+    db.create_all()
+    record = User(id=26, username="TestUcusu", password="ZurnaGonnaGetYouDown")
+    db.session.add(record)
+    db.session.commit()
+
+
+# add endpoints
 api.add_resource(Login, '/api/giris')
 api.add_resource(GetServerTime, '/api/sunucusaati')
 api.add_resource(PostTelemetry, '/api/telemetri_gonder')
@@ -164,21 +305,8 @@ api.add_resource(Logout, '/api/cikis')
 
 if __name__ == "__main__":
 
-    if os.path.exists("./database/login.db"):
-        pass
-    else:
-        """
-            * Create database if not already exist
-            * Create user table
-            * Insert an entry to db who can access API
-            * Default estu & "1234" can be changed config.py
-            * More entry can be added
-        """
-        os.mkdir("./database")
-        record = User(id=1, username=VALID_USERNAME, password=VALID_PASSWORD)
-        db.create_all()
-        db.session.add(record)
-        db.session.commit()
-        print(" * Database is created !")
+    # log the server will start
+    logger.debug("started server")
 
+    # start the server
     app.run("0.0.0.0", port=5000)
