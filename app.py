@@ -107,7 +107,7 @@ class Login(flask_restful.Resource):
                 flask_login.login_user(user)
 
                 # write logs that user has logged in
-                logger.debug(user.username + " successfully logged in")
+                logger.debug(user.username + " successfully logged into judge server")
 
                 # generate response
                 login_post_response_content = {"result": "success"}
@@ -117,7 +117,7 @@ class Login(flask_restful.Resource):
             else:
 
                 # write logs that user failed to log in
-                logger.debug(args["kadi"] + " failed to log in")
+                logger.debug(args["kadi"] + " failed to log into judge server")
 
                 # generate response
                 login_post_response_content = {"result": "failure"}
@@ -204,7 +204,7 @@ class PostTelemetry(flask_restful.Resource):
         else:
 
             # log the error
-            logger.debug("incomplete telemetry data")
+            logger.debug("incomplete telemetry data from team")
 
             # generate response
             telemetry_post_response_content = {"result": "failure"}
@@ -246,7 +246,7 @@ class PostLockOn(flask_restful.Resource):
         else:
 
             # log the error
-            logger.debug("incomplete target lock data")
+            logger.debug("incomplete target lock data from team")
 
             # generate response
             target_post_response_content = {"result": "failure"}
@@ -278,7 +278,7 @@ class Logout(flask_restful.Resource):
         flask_login.logout_user()
 
         # log the action
-        logger.debug(user_name + " successfully logged out")
+        logger.debug(user_name + " successfully logged out from judge server")
 
         # generate response
         logout_get_response_content = {"result": "success"}
@@ -306,7 +306,7 @@ api.add_resource(Logout, '/api/cikis')
 if __name__ == "__main__":
 
     # log the server will start
-    logger.debug("started server")
+    logger.debug("started judge server")
 
     # start the server
     app.run("0.0.0.0", port=5000)
