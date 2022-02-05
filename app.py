@@ -298,8 +298,13 @@ def create_tables():
 
     # create database and users
     db.create_all()
-    record = User(id=26, username="TestUcusu", password="ZurnaGonnaGetYouDown")
-    db.session.add(record)
+    records = [User(id=26, username="TestUcusu", password="ZurnaGonnaGetYouDown"),
+               User(id=11, username="DummyTeam11", password="DummyPassword11"),
+               User(id=41, username="DummyTeam41", password="DummyPassword41"),
+               User(id=58, username="DummyTeam58", password="DummyPassword58"),
+               User(id=117, username="DummyTeam117", password="DummyPassword117")]
+    for record in records:
+        db.session.add(record)
     db.session.commit()
 
 
