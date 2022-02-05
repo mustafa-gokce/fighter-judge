@@ -2,7 +2,7 @@ import time
 import requests
 
 # server url
-server_url = "http://127.0.0.1:5000/"
+server_url = "http://0.0.0.0:5000/"
 
 # create session
 session = requests.Session()
