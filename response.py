@@ -81,7 +81,7 @@ class Response:
                     "zaman_farki": self.get_delay()
                 },
                 {
-                    "takim_numarasi": 55,
+                    "takim_numarasi": 11,
                     "iha_enlem": 0,
                     "iha_boylam": 0,
                     "iha_irtifa": 0,
@@ -90,6 +90,36 @@ class Response:
                     "iha_yatis": 0,
                     "zaman_farki": 0
                 },
+                {
+                    "takim_numarasi": 41,
+                    "iha_enlem": 0,
+                    "iha_boylam": 0,
+                    "iha_irtifa": 0,
+                    "iha_dikilme": 0,
+                    "iha_yonelme": 0,
+                    "iha_yatis": 0,
+                    "zaman_farki": 0
+                },
+                {
+                    "takim_numarasi": 58,
+                    "iha_enlem": 0,
+                    "iha_boylam": 0,
+                    "iha_irtifa": 0,
+                    "iha_dikilme": 0,
+                    "iha_yonelme": 0,
+                    "iha_yatis": 0,
+                    "zaman_farki": 0
+                },
+                {
+                    "takim_numarasi": 117,
+                    "iha_enlem": 0,
+                    "iha_boylam": 0,
+                    "iha_irtifa": 0,
+                    "iha_dikilme": 0,
+                    "iha_yonelme": 0,
+                    "iha_yatis": 0,
+                    "zaman_farki": 0
+                }
             ]
         }
 
