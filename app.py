@@ -2,6 +2,8 @@ import os
 import sys
 import logging
 import datetime
+import random
+import string
 import flask
 import flask_login
 import flask_restful
@@ -43,7 +45,7 @@ logger.addHandler(handler)
 
 # configure server
 app = flask.Flask(__name__)
-app.secret_key = "super secret key"
+app.secret_key = "".join(random.sample(string.ascii_letters + string.digits, 40))
 api = flask_restful.Api(app)
 db = flask_sqlalchemy.SQLAlchemy(app)
 login_manager = flask_login.LoginManager()
@@ -290,10 +292,28 @@ class Logout(flask_restful.Resource):
 
 @app.before_first_request
 def create_tables():
+    """
+        Create users before first request
+    """
+
+    # create database and users
     db.create_all()
     record = User(id=26, username="TestUcusu", password="ZurnaGonnaGetYouDown")
     db.session.add(record)
     db.session.commit()
+
+
+@app.before_first_request
+def server_start():
+    """
+        Server starting procedures and initial configurations
+    """
+
+    # log the server has started
+    logger.debug("started judge server")
+
+    # log the secret key
+    logger.debug(app.secret_key + " is the judge server secret key")
 
 
 # add endpoints
@@ -304,9 +324,6 @@ api.add_resource(PostLockOn, '/api/kilitlenme_bilgisi')
 api.add_resource(Logout, '/api/cikis')
 
 if __name__ == "__main__":
-
-    # log the server will start
-    logger.debug("started judge server")
 
     # start the server
     app.run("0.0.0.0", port=5000)
