@@ -9,7 +9,9 @@ import flask_login
 import flask_restful
 import flask_sqlalchemy
 import response
-import parser
+import parsers
+
+from judge import *
 
 # logger settings
 file_name = "fighter-judge"
@@ -79,6 +81,18 @@ def load_user(user_id):
     return User.query.get(user_id)
 
 
+def get_server_time():
+    # get server time
+    server_time = datetime.datetime.now()
+
+    res = {"saat": server_time.hour,
+           "dakika": server_time.minute,
+           "saniye": server_time.second,
+           "milisaniye": round(server_time.microsecond / 1000)}
+
+    return res
+
+
 class Login(flask_restful.Resource):
     """
         Login endpoint
@@ -94,7 +108,7 @@ class Login(flask_restful.Resource):
         """
 
         # get arguments
-        args = parser.login_parser.parse_args()
+        args = parsers.login_parser.parse_args()
 
         # get user
         user = User.query.filter_by(username=args["kadi"], password=args["sifre"]).first()
@@ -107,6 +121,9 @@ class Login(flask_restful.Resource):
 
                 # give permissions to user to be logged in
                 flask_login.login_user(user)
+
+                # register user to judge
+                Judge.register_user(user, get_server_time())
 
                 # write logs that user has logged in
                 logger.debug(user.username + " successfully logged into judge server")
@@ -154,14 +171,8 @@ class GetServerTime(flask_restful.Resource):
             Required fields: none
         """
 
-        # get server time
-        server_time = datetime.datetime.now()
-
         # generate response
-        time_get_response_content = {"saat": server_time.hour,
-                                     "dakika": server_time.minute,
-                                     "saniye": server_time.second,
-                                     "milisaniye": round(server_time.microsecond / 1000)}
+        time_get_response_content = get_server_time()
         time_get_response_code = 200
 
         # log the request
@@ -187,10 +198,13 @@ class PostTelemetry(flask_restful.Resource):
         """
 
         # get arguments from team
-        args = parser.telemetry_parser.parse_args()
+        args = parsers.telemetry_parser.parse_args()
 
         # save telemetry data of the team
         response.set_args(args)
+
+        # save telemetry data for judge
+        Judge.register_telem_data(args)
 
         # telemetry data is not empty
         if args is not None:
@@ -232,7 +246,7 @@ class PostLockOn(flask_restful.Resource):
         """
 
         # get target lock data from team
-        args = parser.lock_on_parser.parse_args()
+        args = parsers.lock_on_parser.parse_args()
 
         # target lock data is not empty
         if args is not None:
@@ -257,6 +271,31 @@ class PostLockOn(flask_restful.Resource):
         # return to response content and code
         return target_post_response_content, target_post_response_code
 
+class GetScoreTable(flask_restful.Resource):
+    """
+        Get score table endpoint
+        Allowed request types: GET
+        Login required: false
+        Description: Get current scores of teams
+    """
+
+    def get(self):
+        scores = Judge.get_scores()
+        logger.debug(str(scores))
+        return scores, 200
+
+class GetDelayTable(flask_restful.Resource):
+    """
+        Get delay table endpoint
+        Allowed request types: GET
+        Login required: false
+        Description: Get current delay of teams
+    """
+
+    def get(self):
+        delays = Judge.get_delays()
+        logger.debug(str(delays))
+        return delays, 200
 
 class Logout(flask_restful.Resource):
     """
@@ -299,10 +338,10 @@ def create_tables():
     # create database and users
     db.create_all()
     records = [User(id=26, username="TestUcusu", password="ZurnaGonnaGetYouDown"),
-               User(id=11, username="DummyTeam11", password="DummyPassword11"),
-               User(id=41, username="DummyTeam41", password="DummyPassword41"),
-               User(id=58, username="DummyTeam58", password="DummyPassword58"),
-               User(id=117, username="DummyTeam117", password="DummyPassword117")]
+               User(id=10, username="DummyTeam1", password="AdimCaferBoyumBirOn"),
+               User(id=41, username="DummyTeam2", password="YouHaveNoIdeaHowHighCanIFly"),
+               User(id=58, username="DummyTeam3", password="PleaseLeaveMeAlone"),
+               User(id=117, username="DummyTeam4", password="MyEnemiesAreAfterMe")]
     for record in records:
         db.session.add(record)
     db.session.commit()
@@ -326,9 +365,10 @@ api.add_resource(Login, '/api/giris')
 api.add_resource(GetServerTime, '/api/sunucusaati')
 api.add_resource(PostTelemetry, '/api/telemetri_gonder')
 api.add_resource(PostLockOn, '/api/kilitlenme_bilgisi')
+api.add_resource(GetScoreTable, '/api/puan_tablosu')
+api.add_resource(GetDelayTable, '/api/gecikme_tablosu')
 api.add_resource(Logout, '/api/cikis')
 
 if __name__ == "__main__":
-
     # start the server
     app.run("0.0.0.0", port=5000)
