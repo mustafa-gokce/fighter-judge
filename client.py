@@ -5,15 +5,15 @@ from datetime import datetime
 # cooldown should be between 500 and 1000 ms to get point.
 COOLDOWN = 0.5
 
+
 # get current time as dict
 def get_time() -> dict:
     c_time = datetime.now()
 
     return {"saat": c_time.hour,
-           "dakika": c_time.minute,
-           "saniye": c_time.second,
-           "milisaniye": round(c_time.microsecond / 1000)}
-
+            "dakika": c_time.minute,
+            "saniye": c_time.second,
+            "milisaniye": round(c_time.microsecond / 1000)}
 
 
 # server url
@@ -34,7 +34,6 @@ print("Login response: ", login_data)
 
 # do some requests
 for _ in range(10):
-
     # get server time
     time_response = session.get(server_url + "api/sunucusaati")
 
@@ -174,5 +173,3 @@ logout_response = session.get(server_url + "api/cikis")
 logout_data = logout_response.json()
 
 print("Logout response: ", logout_data)
-
-

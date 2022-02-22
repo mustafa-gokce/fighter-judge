@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+import datetime
 import time
+
 
 # team structure to keep track data of team individually
 @dataclass
@@ -31,7 +33,6 @@ class Judge:
         for team in cls.registered_teams:
 
             if team.user_name == user.username:
-
                 cls.registered_teams.remove(team)
 
     # save telemetry data of the team
@@ -42,12 +43,46 @@ class Judge:
 
             # If specified team in registered teams
             if team.id == telem_data["takim_numarasi"]:
-
                 # Update telemetry data but keep previous one
                 team.prev_telem_data = team.curr_telem_data
                 team.curr_telem_data = telem_data
 
         cls.__update_scores()
+
+    @classmethod
+    def get_response(cls, args):
+        # get server time
+        server_time = datetime.datetime.now()
+
+        # build response telemetry data
+        response_data = {
+            "sistemSaati": {
+                "saat": server_time.hour,
+                "dakika": server_time.minute,
+                "saniye": server_time.second,
+                "milisaniye": int(server_time.microsecond / 1000)
+            },
+            "konumBilgileri": ""}
+
+        location_infos = []
+
+        for team in cls.registered_teams:
+            if team.curr_telem_data is not None:
+                temp_dict = {
+                    "takim_numarasi": team.curr_telem_data["takim_numarasi"],
+                    "iha_enlem": team.curr_telem_data["IHA_enlem"],
+                    "iha_boylam": team.curr_telem_data["IHA_boylam"],
+                    "iha_irtifa": team.curr_telem_data["IHA_irtifa"],
+                    "iha_dikilme": team.curr_telem_data["IHA_dikilme"],
+                    "iha_yonelme": team.curr_telem_data["IHA_yonelme"],
+                    "iha_yatis": team.curr_telem_data["IHA_yatis"],
+                    "zaman_farki": cls.get_delays()["gecikmeler"][team.user_name]
+                }
+                location_infos.append(temp_dict)
+
+        response_data["konumBilgileri"] = location_infos
+
+        return response_data
 
     # update score table by using current datas of teams
     @classmethod
@@ -83,21 +118,11 @@ class Judge:
     # it returns score table
     @classmethod
     def get_scores(cls) -> dict:
-        temp_dict = dict()
-        for team in cls.registered_teams:
-            temp_dict[f"{team.user_name}"] = team.score
-
-        res = {"puanlar":temp_dict}
-
-        return res
+        temp_dict = {f"{team.user_name}": team.score for team in cls.registered_teams}
+        return {"puanlar": temp_dict}
 
     # it returns delay table
     @classmethod
     def get_delays(cls) -> dict:
-        temp_dict = dict()
-        for team in cls.registered_teams:
-            temp_dict[f"{team.user_name}"] = team.last_delay
-
-        res = {"gecikmeler": temp_dict}
-
-        return res
+        temp_dict = {f"{team.user_name}": team.last_delay for team in cls.registered_teams}
+        return {"gecikmeler": temp_dict}
