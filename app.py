@@ -56,6 +56,8 @@ login_manager.init_app(app)
 # get response object
 response = response.Response()
 
+# active users list
+active_users = []
 
 class User(flask_login.UserMixin, db.Model):
     """
@@ -85,12 +87,10 @@ def get_server_time():
     # get server time
     server_time = datetime.datetime.now()
 
-    res = {"saat": server_time.hour,
-           "dakika": server_time.minute,
-           "saniye": server_time.second,
-           "milisaniye": round(server_time.microsecond / 1000)}
-
-    return res
+    return {"saat": server_time.hour,
+            "dakika": server_time.minute,
+            "saniye": server_time.second,
+            "milisaniye": round(server_time.microsecond / 1000)}
 
 
 class Login(flask_restful.Resource):
@@ -121,6 +121,7 @@ class Login(flask_restful.Resource):
 
                 # give permissions to user to be logged in
                 flask_login.login_user(user)
+                active_users.append(user)
 
                 # register user to judge
                 Judge.register_user(user, get_server_time())
@@ -271,6 +272,7 @@ class PostLockOn(flask_restful.Resource):
         # return to response content and code
         return target_post_response_content, target_post_response_code
 
+
 class GetScoreTable(flask_restful.Resource):
     """
         Get score table endpoint
@@ -284,6 +286,7 @@ class GetScoreTable(flask_restful.Resource):
         logger.debug(str(scores))
         return scores, 200
 
+
 class GetDelayTable(flask_restful.Resource):
     """
         Get delay table endpoint
@@ -296,6 +299,24 @@ class GetDelayTable(flask_restful.Resource):
         delays = Judge.get_delays()
         logger.debug(str(delays))
         return delays, 200
+
+
+class GetActiveUsers(flask_restful.Resource):
+    """
+        Get active users endpoint
+        Allowed request types: GET
+        Login required: false
+        Description: Get current delay of teams
+    """
+
+    def get(self):
+        active_users_dict = {user.id: user.username for user in active_users}
+
+        # log the action
+        logger.debug(str(active_users_dict) + " successfully logged out from judge server")
+
+        return active_users_dict, 200
+
 
 class Logout(flask_restful.Resource):
     """
@@ -314,6 +335,9 @@ class Logout(flask_restful.Resource):
 
         # get usr name
         user_name = flask_login.current_user.username
+
+        # judge remove user
+        Judge.remove_user(flask_login.current_user)
 
         # kick user from the server
         flask_login.logout_user()
@@ -367,6 +391,7 @@ api.add_resource(PostTelemetry, '/api/telemetri_gonder')
 api.add_resource(PostLockOn, '/api/kilitlenme_bilgisi')
 api.add_resource(GetScoreTable, '/api/puan_tablosu')
 api.add_resource(GetDelayTable, '/api/gecikme_tablosu')
+api.add_resource(GetActiveUsers, '/api/aktif_kullanicilar')
 api.add_resource(Logout, '/api/cikis')
 
 if __name__ == "__main__":
