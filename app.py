@@ -1,14 +1,12 @@
 import os
 import sys
 import logging
-import datetime
 import random
 import string
 import flask
 import flask_login
 import flask_restful
 import flask_sqlalchemy
-import response
 import parsers
 
 from judge import *
@@ -53,11 +51,9 @@ db = flask_sqlalchemy.SQLAlchemy(app)
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
 
-# get response object
-response = response.Response()
-
 # active users list
 active_users = []
+
 
 class User(flask_login.UserMixin, db.Model):
     """
@@ -127,7 +123,7 @@ class Login(flask_restful.Resource):
                 Judge.register_user(user, get_server_time())
 
                 # write logs that user has logged in
-                logger.debug(user.username + " successfully logged into judge server")
+                logger.debug(f"{user.username} successfully logged into judge server")
 
                 # generate response
                 login_post_response_content = {"result": "success"}
@@ -137,7 +133,7 @@ class Login(flask_restful.Resource):
             else:
 
                 # write logs that user failed to log in
-                logger.debug(args["kadi"] + " failed to log into judge server")
+                logger.debug(f"{args['kadi']} failed to log into judge server")
 
                 # generate response
                 login_post_response_content = {"result": "failure"}
@@ -147,7 +143,7 @@ class Login(flask_restful.Resource):
         else:
 
             # write logs that user has logged in before
-            logger.debug(user.username + " logged in before")
+            logger.debug(f"{user.username} logged in before")
 
             # generate response
             login_post_response_content = {"result": "unnecessary"}
@@ -201,9 +197,6 @@ class PostTelemetry(flask_restful.Resource):
         # get arguments from team
         args = parsers.telemetry_parser.parse_args()
 
-        # save telemetry data of the team
-        response.set_args(args)
-
         # save telemetry data for judge
         Judge.register_telem_data(args)
 
@@ -214,7 +207,7 @@ class PostTelemetry(flask_restful.Resource):
             logger.debug(str(args))
 
             # generate response
-            telemetry_post_response_content = response.get_data()
+            telemetry_post_response_content = Judge.get_response(args)
             telemetry_post_response_code = 200
 
         # telemetry data is empty
@@ -343,7 +336,7 @@ class Logout(flask_restful.Resource):
         flask_login.logout_user()
 
         # log the action
-        logger.debug(user_name + " successfully logged out from judge server")
+        logger.debug(f"{user_name} successfully logged out from judge server")
 
         # generate response
         logout_get_response_content = {"result": "success"}
@@ -381,7 +374,7 @@ def server_start():
     logger.debug("started judge server")
 
     # log the secret key
-    logger.debug(app.secret_key + " is the judge server secret key")
+    logger.debug(f"{app.secret_key} is the judge server secret key")
 
 
 # add endpoints
