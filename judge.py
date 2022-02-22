@@ -17,13 +17,22 @@ class Team:
 
 
 class Judge:
-    registered_teams: list[Team] = list()
+    registered_teams = list()
 
     # register the user to registered_team
     @classmethod
     def register_user(cls, user, login_time):
         team = Team(id=user.id, user_name=user.username, login_time=login_time)
         cls.registered_teams.append(team)
+
+    @classmethod
+    def remove_user(cls, user):
+
+        for team in cls.registered_teams:
+
+            if team.user_name == user.username:
+
+                cls.registered_teams.remove(team)
 
     # save telemetry data of the team
     @classmethod

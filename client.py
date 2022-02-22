@@ -9,18 +9,17 @@ COOLDOWN = 0.5
 def get_time() -> dict:
     c_time = datetime.now()
 
-    res = {"saat": c_time.hour,
+    return {"saat": c_time.hour,
            "dakika": c_time.minute,
            "saniye": c_time.second,
            "milisaniye": round(c_time.microsecond / 1000)}
 
-    return res
 
 
 # server url
 server_url = "http://127.0.0.1:5000/"
 
-# create session
+# create sessions
 session = requests.Session()
 
 # login to the judge server
@@ -44,6 +43,9 @@ for _ in range(10):
 
     print("Time response: ", time_data)
 
+    # current time
+    c_time = get_time()
+
     # generate dummy telemetry data
     dummy_telemetry = {
         "takim_numarasi": 26,
@@ -62,10 +64,10 @@ for _ in range(10):
         "Hedef_genislik": 12,
         "Hedef_yukseklik": 46,
         "GPSSaati": {
-            "saat": get_time()["saat"],
-            "dakika": get_time()["dakika"],
-            "saniye": get_time()["saniye"],
-            "milisaniye": get_time()["milisaniye"]
+            "saat": c_time["saat"],
+            "dakika": c_time["dakika"],
+            "saniye": c_time["saniye"],
+            "milisaniye": c_time["milisaniye"]
         }
     }
 
@@ -81,6 +83,9 @@ for _ in range(10):
 
     # cooldown
     time.sleep(COOLDOWN)
+
+    # current time
+    c_time = get_time()
 
     dummy_telemetry = {
         "takim_numarasi": 26,
@@ -99,10 +104,10 @@ for _ in range(10):
         "Hedef_genislik": 12,
         "Hedef_yukseklik": 46,
         "GPSSaati": {
-            "saat": get_time()["saat"],
-            "dakika": get_time()["dakika"],
-            "saniye": get_time()["saniye"],
-            "milisaniye": get_time()["milisaniye"]
+            "saat": c_time["saat"],
+            "dakika": c_time["dakika"],
+            "saniye": c_time["saniye"],
+            "milisaniye": c_time["milisaniye"]
         }
     }
 
