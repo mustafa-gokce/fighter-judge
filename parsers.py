@@ -1,12 +1,12 @@
-from flask_restful import reqparse
+import flask_restful.reqparse
 
 # judge server login request parser
-login_parser = reqparse.RequestParser()
+login_parser = flask_restful.reqparse.RequestParser()
 login_parser.add_argument("kadi", type=str, required=True)
 login_parser.add_argument("sifre", type=str, required=True)
 
 # judge server telemetry send request parser
-telemetry_parser = reqparse.RequestParser()
+telemetry_parser = flask_restful.reqparse.RequestParser()
 telemetry_parser.add_argument("takim_numarasi", type=int, required=True)
 telemetry_parser.add_argument("IHA_enlem", type=float, required=True)
 telemetry_parser.add_argument("IHA_boylam", type=float, required=True)
@@ -25,7 +25,7 @@ telemetry_parser.add_argument("Hedef_yukseklik", type=int, required=True)
 telemetry_parser.add_argument("GPSSaati", type=dict, required=True)
 
 # judge server target lock request parser
-lock_on_parser = reqparse.RequestParser()
+lock_on_parser = flask_restful.reqparse.RequestParser()
 lock_on_parser.add_argument("kilitlenmeBaslangicZamani", type=dict, required=True)
 lock_on_parser.add_argument("kilitlenmeBitisZamani", type=dict, required=True)
 lock_on_parser.add_argument("otonom_kilitlenme", type=int, required=True)

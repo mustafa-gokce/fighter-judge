@@ -3,13 +3,13 @@ import sys
 import logging
 import random
 import string
+import datetime
 import flask
 import flask_login
 import flask_restful
 import flask_sqlalchemy
 import parsers
-
-from judge import *
+import judge
 
 # logger settings
 file_name = "fighter-judge"
@@ -120,7 +120,7 @@ class Login(flask_restful.Resource):
                 active_users.append(user)
 
                 # register user to judge
-                Judge.register_user(user, get_server_time())
+                judge.Judge.register_user(user, get_server_time())
 
                 # write logs that user has logged in
                 logger.debug(f"{user.username} successfully logged into judge server")
@@ -198,7 +198,7 @@ class PostTelemetry(flask_restful.Resource):
         args = parsers.telemetry_parser.parse_args()
 
         # save telemetry data for judge
-        Judge.register_telem_data(args)
+        judge.Judge.register_telem_data(args)
 
         # telemetry data is not empty
         if args is not None:
@@ -207,7 +207,7 @@ class PostTelemetry(flask_restful.Resource):
             logger.debug(str(args))
 
             # generate response
-            telemetry_post_response_content = Judge.get_response(args)
+            telemetry_post_response_content = judge.Judge.get_response(args)
             telemetry_post_response_code = 200
 
         # telemetry data is empty
@@ -275,7 +275,7 @@ class GetScoreTable(flask_restful.Resource):
     """
 
     def get(self):
-        scores = Judge.get_scores()
+        scores = judge.Judge.get_scores()
         logger.debug(str(scores))
         return scores, 200
 
@@ -289,7 +289,7 @@ class GetDelayTable(flask_restful.Resource):
     """
 
     def get(self):
-        delays = Judge.get_delays()
+        delays = judge.Judge.get_delays()
         logger.debug(str(delays))
         return delays, 200
 
@@ -330,7 +330,7 @@ class Logout(flask_restful.Resource):
         user_name = flask_login.current_user.username
 
         # judge remove user
-        Judge.remove_user(flask_login.current_user)
+        judge.Judge.remove_user(flask_login.current_user)
 
         # kick user from the server
         flask_login.logout_user()
@@ -378,14 +378,14 @@ def server_start():
 
 
 # add endpoints
-api.add_resource(Login, '/api/giris')
-api.add_resource(GetServerTime, '/api/sunucusaati')
-api.add_resource(PostTelemetry, '/api/telemetri_gonder')
-api.add_resource(PostLockOn, '/api/kilitlenme_bilgisi')
-api.add_resource(GetScoreTable, '/api/puan_tablosu')
-api.add_resource(GetDelayTable, '/api/gecikme_tablosu')
-api.add_resource(GetActiveUsers, '/api/aktif_kullanicilar')
-api.add_resource(Logout, '/api/cikis')
+api.add_resource(Login, "/api/giris")
+api.add_resource(GetServerTime, "/api/sunucusaati")
+api.add_resource(PostTelemetry, "/api/telemetri_gonder")
+api.add_resource(PostLockOn, "/api/kilitlenme_bilgisi")
+api.add_resource(GetScoreTable, "/api/puan_tablosu")
+api.add_resource(GetDelayTable, "/api/gecikme_tablosu")
+api.add_resource(GetActiveUsers, "/api/aktif_kullanicilar")
+api.add_resource(Logout, "/api/cikis")
 
 if __name__ == "__main__":
     # start the server

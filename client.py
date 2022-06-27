@@ -1,6 +1,6 @@
 import time
 import requests
-from datetime import datetime
+import datetime
 
 # cooldown should be between 500 and 1000 ms to get point.
 COOLDOWN = 0.5
@@ -8,7 +8,7 @@ COOLDOWN = 0.5
 
 # get current time as dict
 def get_time() -> dict:
-    c_time = datetime.now()
+    c_time = datetime.datetime.now()
 
     return {"saat": c_time.hour,
             "dakika": c_time.minute,

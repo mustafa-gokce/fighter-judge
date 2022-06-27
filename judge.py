@@ -1,10 +1,9 @@
-from dataclasses import dataclass
+import dataclasses
 import datetime
-import time
 
 
 # team structure to keep track data of team individually
-@dataclass
+@dataclasses.dataclass
 class Team:
     id: int
     user_name: str
@@ -56,7 +55,7 @@ class Judge:
 
         # build response telemetry data
         response_data = {
-            "sistemSaati": {
+            "sunucuSaati": {
                 "saat": server_time.hour,
                 "dakika": server_time.minute,
                 "saniye": server_time.second,
