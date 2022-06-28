@@ -117,10 +117,15 @@ class Login(flask_restful.Resource):
 
                 # give permissions to user to be logged in
                 flask_login.login_user(user)
-                active_users.append(user)
 
-                # register user to judge
-                judge.Judge.register_user(user, get_server_time())
+                # do not add existing user again
+                if user.username not in [x.username for x in active_users]:
+
+                    # add the user
+                    active_users.append(user)
+
+                    # register user to judge
+                    judge.Judge.register_user(user, get_server_time())
 
                 # write logs that user has logged in
                 logger.debug(f"{user.username} successfully logged into judge server")
@@ -306,7 +311,7 @@ class GetActiveUsers(flask_restful.Resource):
         active_users_dict = {user.id: user.username for user in active_users}
 
         # log the action
-        logger.debug(str(active_users_dict) + " successfully logged out from judge server")
+        logger.debug(str(active_users_dict) + " are the active users in judge server")
 
         return active_users_dict, 200
 
