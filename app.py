@@ -212,7 +212,7 @@ class PostTelemetry(flask_restful.Resource):
             logger.debug(str(args))
 
             # generate response
-            telemetry_post_response_content = judge.Judge.get_response(args)
+            telemetry_post_response_content = judge.Judge.get_response(args, flask_login.current_user.id)
             telemetry_post_response_code = 200
 
         # telemetry data is empty

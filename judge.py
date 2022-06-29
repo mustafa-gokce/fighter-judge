@@ -49,7 +49,7 @@ class Judge:
         cls.__update_scores()
 
     @classmethod
-    def get_response(cls, args):
+    def get_response(cls, args, user_id):
         # get server time
         server_time = datetime.datetime.now()
 
@@ -61,23 +61,24 @@ class Judge:
                 "saniye": server_time.second,
                 "milisaniye": int(server_time.microsecond / 1000)
             },
-            "konumBilgileri": ""}
+            "konumBilgileri": None}
 
         location_infos = []
 
         for team in cls.registered_teams:
             if team.curr_telem_data is not None:
-                temp_dict = {
-                    "takim_numarasi": team.curr_telem_data["takim_numarasi"],
-                    "iha_enlem": team.curr_telem_data["IHA_enlem"],
-                    "iha_boylam": team.curr_telem_data["IHA_boylam"],
-                    "iha_irtifa": team.curr_telem_data["IHA_irtifa"],
-                    "iha_dikilme": team.curr_telem_data["IHA_dikilme"],
-                    "iha_yonelme": team.curr_telem_data["IHA_yonelme"],
-                    "iha_yatis": team.curr_telem_data["IHA_yatis"],
-                    "zaman_farki": cls.get_delays()["gecikmeler"][team.user_name]
-                }
-                location_infos.append(temp_dict)
+                if team.curr_telem_data["takim_numarasi"] != user_id:
+                    temp_dict = {
+                        "takim_numarasi": team.curr_telem_data["takim_numarasi"],
+                        "iha_enlem": team.curr_telem_data["IHA_enlem"],
+                        "iha_boylam": team.curr_telem_data["IHA_boylam"],
+                        "iha_irtifa": team.curr_telem_data["IHA_irtifa"],
+                        "iha_dikilme": team.curr_telem_data["IHA_dikilme"],
+                        "iha_yonelme": team.curr_telem_data["IHA_yonelme"],
+                        "iha_yatis": team.curr_telem_data["IHA_yatis"],
+                        "zaman_farki": cls.get_delays()["gecikmeler"][team.user_name]
+                    }
+                    location_infos.append(temp_dict)
 
         response_data["konumBilgileri"] = location_infos
 
